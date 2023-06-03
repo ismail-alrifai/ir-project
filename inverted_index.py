@@ -10,7 +10,10 @@ class InvertedIndex:
         self.tf = {}
         self.idf = {}
         self.tf_idf = {}
+        self.sumAvp = 0.0
+        self.queryCnt = 0
         self.documents = {}
+        self.threshold = 0.2
         self.stemmer = stemmer
         self.dataset = dataset
         self.stripChars = stripChars
@@ -21,7 +24,7 @@ class InvertedIndex:
     def build(self):
         for doc in self.dataset.docs_iter():
             self.addToInvertedIndex(Document(doc.doc_id ,doc.text ,self.tokenizeDocument(doc.text)))
-            if doc.doc_id == '500':
+            if doc.doc_id == '800':
                 break
         self.calcIDF()
         self.calcTF_IDF()
@@ -89,11 +92,53 @@ class InvertedIndex:
         query.setVec(vec)
         return query
 
+    def evaluateQuery(self ,irsResult ,query):
+        queryId = 0
+        for query_id ,text in self.dataset.queries_iter():
+            if query == text:
+                queryId = query_id
+                break
+
+        datasetResult = []
+        for query_id, doc_id, relevance, iteration in self.dataset.qrels_iter():
+            if query_id == queryId:
+                datasetResult.append(doc_id)
+
+        precisionSum = 0.0
+        numRelevantRetrieved = 0
+        numRetrieved = len(irsResult)
+        numRelevant = len(datasetResult)
+
+        for i ,res in enumerate(irsResult):
+            if res['doc_id'] in datasetResult:
+                numRelevantRetrieved += 1
+                precisionSum += numRelevantRetrieved / (i + 1)
+
+        precision = numRelevantRetrieved / numRetrieved
+        recall = numRelevantRetrieved / numRelevant
+        avp = precisionSum / numRelevantRetrieved
+        self.queryCnt += 1
+        self.sumAvp += avp
+        mapVal = self.sumAvp / self.queryCnt
+
+        #TODO: MRR
+
+        return {
+            "precision": precision,
+            "recall": recall,
+            "avp": avp,
+            "map": mapVal
+        }
+
+
     def lookup(self ,inputQuery):
         query = self.initQuery(Document(1, inputQuery ,self.tokenizeDocument(inputQuery)))
         
         sim = {}
         for document in self.documents.values():
+            # if document.doc_id in ['597','598','634','681','744']:
+            #     print(query.terms)
+
             termsIntersection = []
             for term in set(query.terms):
                 if term in document.terms:
@@ -103,7 +148,7 @@ class InvertedIndex:
             for term in set(document.terms):
                 sumDocTF_IDF_2 += (self.tf_idf[term][document.doc_id] ** 2)
 
-            sim[document.doc_id] = 0
+            sim[document.doc_id] = 0.0
             for term in termsIntersection:
                 sim[document.doc_id] += self.tf_idf[term][document.doc_id] / math.sqrt(sumDocTF_IDF_2)
         
@@ -113,14 +158,20 @@ class InvertedIndex:
         sortedDocs = list(self.documents.values())
         sortedDocs.sort(reverse=True,key=sortFunction)
 
-        response = []
+        irsResult = []
         for doc in sortedDocs:
-            response.append({
-                "doc_id": doc.doc_id,
-                "text": doc.text
-            })
+            if doc.doc_id in ['597','598','634','681','744']:
+                print(doc.doc_id ,sim[doc.doc_id])
+            if sim[doc.doc_id] >= self.threshold:
+                irsResult.append({
+                    "doc_id": doc.doc_id,
+                    "text": doc.text
+                })
 
-        return response
+        return {
+            "irsResult": irsResult,
+            "evaluation": self.evaluateQuery(irsResult ,inputQuery)
+        }
     
     def tokenizeDocument(self, doc):
         text = doc

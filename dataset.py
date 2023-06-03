@@ -1,4 +1,9 @@
-from nltk.stem.snowball import EnglishStemmer 
+# mmarco/fr
+# mmarco/fr/dev
+# mmarco/fr/train
+# mmarco/fr/dev/small
+
+from nltk.stem.snowball import EnglishStemmer ,FrenchStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 import ir_datasets
@@ -14,13 +19,21 @@ class Datasets:
             EnglishStemmer(),
             WordNetLemmatizer()
         )
-
         self.ID1.build()
 
+        # self.ID2 = InvertedIndex(
+        #     ir_datasets.load('mmarco/fr/dev/small'),
+        #     " .!?,@/\#~:;'\"",
+        #     stopwords.words('french'),
+        #     FrenchStemmer(),
+        #     WordNetLemmatizer()
+        # )
+        # self.ID2.build()
+
     def query(self ,dataset ,query):
-        if dataset == 'lotte/lifestyle':
+        if dataset == 'lotte':
             return self.ID1.lookup(query)
-        elif dataset == 'lotte/lifestyle':
+        elif dataset == 'mmarco':
             return self.ID2.lookup(query)
         else:
             return None
