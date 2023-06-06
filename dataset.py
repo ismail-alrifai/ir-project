@@ -19,7 +19,6 @@ class Datasets:
             EnglishStemmer(),
             WordNetLemmatizer()
         )
-        self.ID1.build()
 
         # self.ID2 = InvertedIndex(
         #     ir_datasets.load('mmarco/fr/dev/small'),
