@@ -10,10 +10,11 @@ class InvertedIndex:
         self.tf = {}
         self.idf = {}
         self.tf_idf = {}
+        self.sumRR = 0.0
         self.sumAvp = 0.0
         self.queryCnt = 0
         self.documents = {}
-        self.threshold = 0.2
+        self.threshold = 0.5
         self.stemmer = stemmer
         self.dataset = dataset
         self.stripChars = stripChars
@@ -21,10 +22,15 @@ class InvertedIndex:
         self.stopwords = set(stopwords)
         self.invertedIndex = defaultdict(list)
 
+    def allInOne(self):
+        for doc in self.dataset.docs_iter():
+            self.documents[doc.doc_id] = Document(doc.doc_id ,doc.text ,self.tokenizeDocument(doc.text))
+
+
     def build(self):
         for doc in self.dataset.docs_iter():
             self.addToInvertedIndex(Document(doc.doc_id ,doc.text ,self.tokenizeDocument(doc.text)))
-            if doc.doc_id == '800':
+            if doc.doc_id == '1000':
                 break
         self.calcIDF()
         self.calcTF_IDF()
@@ -109,8 +115,12 @@ class InvertedIndex:
         numRetrieved = len(irsResult)
         numRelevant = len(datasetResult)
 
+        firstRelevantIsFound = False
         for i ,res in enumerate(irsResult):
             if res['doc_id'] in datasetResult:
+                if not firstRelevantIsFound:
+                    self.sumRR += 1.0 / (i + 1.0)
+                    firstRelevantIsFound = True
                 numRelevantRetrieved += 1
                 precisionSum += numRelevantRetrieved / (i + 1)
 
@@ -120,6 +130,7 @@ class InvertedIndex:
         self.queryCnt += 1
         self.sumAvp += avp
         mapVal = self.sumAvp / self.queryCnt
+        mrr = self.sumRR / self.queryCnt
 
         #TODO: MRR
 
@@ -127,26 +138,23 @@ class InvertedIndex:
             "precision": precision,
             "recall": recall,
             "avp": avp,
-            "map": mapVal
+            "map": mapVal,
+            "mrr": mrr
         }
-
 
     def lookup(self ,inputQuery):
         query = self.initQuery(Document(1, inputQuery ,self.tokenizeDocument(inputQuery)))
-        
+
         sim = {}
         for document in self.documents.values():
-            # if document.doc_id in ['597','598','634','681','744']:
-            #     print(query.terms)
-
             termsIntersection = []
             for term in set(query.terms):
                 if term in document.terms:
                     termsIntersection.append(term)
             
-            sumDocTF_IDF_2 = 0
+            sumDocTF_IDF_2 = 0.0
             for term in set(document.terms):
-                sumDocTF_IDF_2 += (self.tf_idf[term][document.doc_id] ** 2)
+                sumDocTF_IDF_2 += (self.tf_idf[term][document.doc_id] * self.tf_idf[term][document.doc_id])
 
             sim[document.doc_id] = 0.0
             for term in termsIntersection:
@@ -160,12 +168,10 @@ class InvertedIndex:
 
         irsResult = []
         for doc in sortedDocs:
-            if doc.doc_id in ['597','598','634','681','744']:
-                print(doc.doc_id ,sim[doc.doc_id])
             if sim[doc.doc_id] >= self.threshold:
                 irsResult.append({
                     "doc_id": doc.doc_id,
-                    "text": doc.text
+                    # "text": doc.text
                 })
 
         return {

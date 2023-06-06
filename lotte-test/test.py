@@ -1,6 +1,9 @@
 import ir_datasets
 
-dataset = ir_datasets.load('lotte/lifestyle/test/search')
-
-for i in dataset.qrels_iter():
-    print(i)
+dataset = ir_datasets.load('mmarco/fr/dev/small')
+print(dataset.docs_path())
+print(dataset.docs)
+n = 0
+for i in dataset.docs_iter():
+    n += 1
+print(n)
