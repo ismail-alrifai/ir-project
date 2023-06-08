@@ -25,14 +25,15 @@ class InvertedIndex:
     def build(self):
         print("Start Building Inverted Index:")
 
-        docs = list(self.dataset.docs_iter())
-        n_docs = len(docs)
-
-        for doc in docs:
+        n_docs = 0
+        for doc in self.dataset.docs_iter():
+            n_docs += 1
             document = self.documents[doc.doc_id] = Document(doc.doc_id, doc.text, self.textTokenizer.tokenizeText(doc.text))
             for term in document.uniqueTerms:
                 self.invertedIndex[term][document.doc_id] = True
                 self.tf[term][document.doc_id] = math.log(1.0 + document.termCnt[term] / document.lenTerms)
+            if doc.doc_id == '800':
+                break
 
         items = self.invertedIndex.items()
         for term ,doc_ids in items:
@@ -75,9 +76,18 @@ class InvertedIndex:
                 numRelevantRetrieved += 1
                 precisionSum += numRelevantRetrieved / (i + 1)
 
-        precision = numRelevantRetrieved / numRetrieved
-        recall = numRelevantRetrieved / numRelevant
-        avp = precisionSum / numRelevantRetrieved
+        precision = 0
+        if numRetrieved != 0:
+            precision = numRelevantRetrieved / numRetrieved
+        
+        recall = 0
+        if numRelevant != 0:
+            recall = numRelevantRetrieved / numRelevant
+        
+        avp = 0
+        if numRelevantRetrieved != 0:
+            avp = precisionSum / numRelevantRetrieved
+            
         self.queryCnt += 1
         self.sumAvp += avp
         mapVal = self.sumAvp / self.queryCnt
@@ -125,5 +135,5 @@ class InvertedIndex:
 
         return {
             "irsResult": irsResult,
-            # "evaluation": self.evaluateQuery(irsResult ,inputQuery)
+            "evaluation": self.evaluateQuery(irsResult ,inputQuery)
         }
