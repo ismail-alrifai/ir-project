@@ -8,8 +8,6 @@ It's a basic ir system which contain multiple `documents` and an `api` to `query
 
 ## Project Structure (Classes)
 
----
-
 ### Text Tokenizer
 
 It is a class that contain the full logic of converting a `document` to a list of needed `terms` only.
