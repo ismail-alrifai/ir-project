@@ -10,6 +10,7 @@ class InvertedIndex:
         self.dataset = dataset
 
         self.idf = defaultdict(float)
+        self.query_docs = defaultdict(set)
         self.tf = defaultdict(lambda: defaultdict(float))
         self.tf_idf = defaultdict(lambda: defaultdict(float))
         self.invertedIndex = defaultdict(lambda: defaultdict(bool))
@@ -44,30 +45,30 @@ class InvertedIndex:
                 self.tf_idf[term][doc_id] = tf * self.idf[term]
                 self.documents[doc_id].insertToVec(self.tf_idf[term][doc_id] ,term)
 
+        for i in self.dataset.qrels_iter():
+            self.query_docs[i.query_id].add(i.doc_id)
+
         print("-----------------------------------")
         print('Inverted Index: Build Successfully.')
         print("-----------------------------------")
 
-    def evaluateQuery(self ,irsResult ,query):
-        queryId = 0
-        for query_id ,text in self.dataset.queries_iter():
-            if query == text:
-                queryId = query_id
-                break
-
-        datasetResult = []
-        for query_id, doc_id, relevance, iteration in self.dataset.qrels_iter():
-            if query_id == queryId:
-                datasetResult.append(doc_id)
+    def evaluateQuery(self ,irsResult ,query ,queryId = None):
+        if queryId == None :
+            queryId = 0
+            for query_id ,text in self.dataset.queries_iter():
+                if query == text:
+                    queryId = query_id
+                    break
 
         precisionSum = 0.0
         numRelevantRetrieved = 0
         numRetrieved = len(irsResult)
-        numRelevant = len(datasetResult)
+        numRelevant = len(self.query_docs[queryId])
 
         firstRelevantIsFound = False
-        for i ,res in enumerate(irsResult):
-            if res['doc_id'] in datasetResult:
+        enumerateRes = enumerate(irsResult)
+        for i ,res in enumerateRes:
+            if res['doc_id'] in self.query_docs[queryId]:
                 if not firstRelevantIsFound:
                     self.sumRR += 1.0 / (i + 1.0)
                     firstRelevantIsFound = True
@@ -99,7 +100,7 @@ class InvertedIndex:
             "mrr": mrr
         }
 
-    def lookup(self ,inputQuery):
+    def lookup(self ,inputQuery ,queryId = None):
         query = Document(-1, inputQuery , self.textTokenizer.tokenizeText(inputQuery))
         for term in query.uniqueTerms:
             tf = math.log(1.0 + query.termCnt[term] / query.lenTerms)
@@ -133,5 +134,15 @@ class InvertedIndex:
 
         return {
             "irsResult": irsResult,
-            "evaluation": self.evaluateQuery(irsResult ,inputQuery)
+            "evaluation": self.evaluateQuery(irsResult ,inputQuery ,queryId)
         }
+    
+    def runAll(self):
+        print("run all")
+        for query in self.dataset.queries_iter():
+            print(query.query_id)
+            self.lookup(query.text ,query.query_id)
+            mapVal = self.sumAvp / self.queryCnt
+            mrr = self.sumRR / self.queryCnt
+            print("map = " ,mapVal)
+            print("mrr = " ,mrr)
