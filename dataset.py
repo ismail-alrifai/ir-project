@@ -1,4 +1,4 @@
-from nltk.stem.snowball import EnglishStemmer ,FrenchStemmer
+from nltk.stem.snowball import EnglishStemmer ,SpanishStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 import ir_datasets
@@ -16,10 +16,10 @@ class Datasets:
         )
 
         self.ID2 = InvertedIndex(
-            ir_datasets.load('mmarco/fr/dev/small'),
+            ir_datasets.load('wikir/es13k/test'),
             " .!?,@/\#~:;'\"",
-            stopwords.words('french'),
-            FrenchStemmer(),
+            stopwords.words('spanish'),
+            SpanishStemmer(),
             WordNetLemmatizer()
         )
 
