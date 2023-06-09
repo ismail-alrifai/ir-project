@@ -18,7 +18,7 @@ class InvertedIndex:
         self.sumRR = 0.0
         self.sumAvp = 0.0
         self.queryCnt = 0
-        self.threshold = 0.5
+        self.threshold = 0.3
 
         self.build()
         

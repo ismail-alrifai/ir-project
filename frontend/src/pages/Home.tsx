@@ -1,25 +1,22 @@
 /** @format */
 
-import React, { useEffect, useState, Dispatch } from "react";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
+import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
-import FormControl from "@mui/material/FormControl";
-import Select, { SelectChangeEvent } from "@mui/material/Select";
-import AppButton from "./../components/AppComponents/buttons/AppButton";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { CardContent } from "@mui/material";
 import Card from "@mui/material/Card";
-import { CardContent, Grid, IconButton } from "@mui/material";
 
 export default function Home() {
-  const navigate = useNavigate();
-
   const [dataset, setDataset] = useState<string>("");
   const [search, setSearch] = useState<string>();
+  const [data, setData] = useState<any>();
+
   const handleChange = (event: SelectChangeEvent) => {
     setDataset(event.target.value as string);
   };
-  console.log({ search });
-  const [data, setData] = useState<any>();
+
   useEffect(() => {
     const fetchData = async () => {
       const response = await fetch(
@@ -30,8 +27,6 @@ export default function Home() {
     };
     fetchData();
   }, [dataset, search]);
-
-  console.log({ data });
 
   return (
     <div
@@ -72,7 +67,9 @@ export default function Home() {
               <MenuItem sx={{ textAlign: "right" }} value={"lotte"}>
                 lotte
               </MenuItem>
-              <MenuItem value={"mmarco"}>mmarco</MenuItem>
+              <MenuItem sx={{ textAlign: "right" }} value={"wikir"}>
+                wikir
+              </MenuItem>
             </Select>
           </FormControl>
           <input

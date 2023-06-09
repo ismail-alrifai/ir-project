@@ -26,7 +26,7 @@ class Datasets:
     def query(self ,dataset ,query):
         if dataset == 'lotte':
             return self.ID1.lookup(query)
-        elif dataset == 'mmarco':
+        elif dataset == 'wikir':
             return self.ID2.lookup(query)
         else:
             return None
