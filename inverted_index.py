@@ -32,8 +32,6 @@ class InvertedIndex:
             for term in document.uniqueTerms:
                 self.invertedIndex[term][document.doc_id] = True
                 self.tf[term][document.doc_id] = math.log(1.0 + document.termCnt[term] / document.lenTerms)
-            if doc.doc_id == '800':
-                break
 
         items = self.invertedIndex.items()
         for term ,doc_ids in items:
