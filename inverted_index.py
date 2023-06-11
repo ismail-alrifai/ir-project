@@ -84,8 +84,8 @@ class InvertedIndex:
             recall = numRelevantRetrieved / numRelevant
         
         avp = 0
-        if numRelevantRetrieved != 0:
-            avp = precisionSum / numRelevantRetrieved
+        if numRetrieved != 0:
+            avp = precisionSum / numRetrieved
             
         self.queryCnt += 1
         self.sumAvp += avp
